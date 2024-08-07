@@ -12,7 +12,6 @@ interface FileData {
     filename: string;
     filepath: string;
     filetype: string;
-    file?: File;
 }
 
 export default function Commands() {

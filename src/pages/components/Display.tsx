@@ -6,7 +6,6 @@ interface FileData {
     filename: string;
     filepath: string;
     filetype: string;
-    file?: File;
 }
 
 interface DisplayProps {
@@ -26,59 +25,47 @@ const Display: React.FC<DisplayProps> = ({ baseUrl, images, audios, videos }) =>
     const handleImageChange = (event: SelectChangeEvent<string>) => {
         const selectedFilePath = event.target.value as string;
         const selectedFile = images.find(file => file.filepath === selectedFilePath);
-        console.log("Selected image:", selectedFile?.file);
         setSelectedImage(selectedFile);
     };
     
     const handleAudioChange = (event: SelectChangeEvent<string>) => {
         const selectedFilePath = event.target.value as string;
         const selectedFile = audios.find(file => file.filepath === selectedFilePath);
-        console.log("Selected audio:", selectedFile?.file);
         setSelectedAudio(selectedFile);
     };
     
     const handleVideoChange = (event: SelectChangeEvent<string>) => {
         const selectedFilePath = event.target.value as string;
         const selectedFile = videos.find(file => file.filepath === selectedFilePath);
-        console.log("Selected video:", selectedFile?.file);
         setSelectedVideo(selectedFile);
     };
 
     const handleDisplayClick = () => {
-        console.log("Selected image:", selectedImage?.filepath);
-        console.log("Selected audio:", selectedAudio?.filepath);
-        console.log("Selected video:", selectedVideo?.filepath);
+        const selectedFiles = [];
 
-        const formData = new FormData();
-    
         if (selectedVideo) {
-            if (selectedVideo.file) {
-                console.log("Appending video:", selectedVideo.file.name);
-                formData.append('video', selectedVideo.file);
-            }
-        } else if (selectedImage || selectedAudio) {
-            if (selectedImage && selectedImage.file) {
-                console.log("Appending image:", selectedImage.file.name);
-                formData.append('image', selectedImage.file);
-            }
-            if (selectedAudio && selectedAudio.file) {
-                console.log("Appending audio:", selectedAudio.file.name);
-                formData.append('audio', selectedAudio.file);
-            }
+            selectedFiles.push(selectedVideo.filename);
         } else {
+            if (selectedImage) {
+                selectedFiles.push(selectedImage.filename);
+            }
+            if (selectedAudio) {
+                selectedFiles.push(selectedAudio.filename);
+            }
+        }
+
+        if (selectedFiles.length === 0) {
             alert('Please select an image and/or audio, or a video');
             return;
         }
-    
-        axios.post(displayUrl, formData, {
-            headers: {
-                'Content-Type': 'multipart/form-data'
-            }
-        }).then(response => {
-            console.log(response.data);
-        }).catch(error => {
-            console.error('Error posting files:', error);
-        });
+
+        axios.post(displayUrl, { files: selectedFiles })
+            .then(response => {
+                console.log(response.data);
+            })
+            .catch(error => {
+                console.error('Error posting files:', error);
+            });
     };
     
 
