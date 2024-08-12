@@ -8,39 +8,74 @@ import Upload from './components/Upload';
 import Files from './components/Files';
 import Logs from './components/Logs';
 
-interface FileData {
-    filename: string;
-    filepath: string;
-    filetype: string;
-}
+import { FileData, LogData } from './FileTypes';
 
 export default function Commands() {
     const baseUrl = "http://127.0.0.1:5000"; // localhost
-    const filesUrl = `${baseUrl}/files`;
+    const uploadsUrl = `${baseUrl}/uploads`;
+    const logsUrl = `${baseUrl}/logs`;
     
     const [files, setFiles] = useState<FileData[]>([]);
+    const [logs, setLogs] = useState<LogData[]>([]);
 
     useEffect(() => {
-        axios.get<FileData[]>(filesUrl)
+        axios.get<FileData[]>(uploadsUrl)
         .then(res => {
-            const fetchedFiles = res.data.map(file => ({
-                ...file,
-                filetype: getFileType(file.filename)
+            console.log("fetched files:", res.data);
+
+            const fileInfo = res.data.map(file => ({
+                fileName: file.file_name,
+                filePath: file.file_path,
+                fileType: file.file_type,
+                uploadTime: file.upload_time
             }));
-            setFiles(fetchedFiles);
+
+            setFiles(fileInfo);
+
+            // setFiles(res.data);
         }).catch(err => {
             console.error("Error fetching data:", err);
         });
-    }, [filesUrl]);
+    }, [uploadsUrl]);
+
+
+    useEffect(() => {
+        axios.get<LogData[]>(logsUrl)
+        .then(res => {
+            console.log("fetched logs:", res.data);
+
+            const logInfo = res.data.map(log => ({
+                tag: log.tag,
+                desc: log.desc,
+                time: log.time,
+            }));
+
+            setLogs(logInfo);
+
+            // setFiles(res.data);
+        }).catch(err => {
+            console.error("Error fetching data:", err);
+        });
+    }, [logsUrl]);
 
     const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
         
         if (file) {
+            const uploadTime = new Date().toString();
+            const fileType = getFileType(file.name);
             const formData = new FormData();
             formData.append('file', file);
+            formData.append('fileType', fileType);
+            formData.append('uploadTime', uploadTime);
 
-            axios.post(filesUrl, formData, {
+            const logData = {        
+                tag: "Upload", 
+                desc: `Uploaded ${file.name}`,
+                time: uploadTime
+            };
+
+            axios.post(uploadsUrl, formData, {
                 headers: {
                     'Content-Type': 'multipart/form-data'
                 }
@@ -49,49 +84,67 @@ export default function Commands() {
                 setFiles(prevFiles => [
                     ...prevFiles,
                     { 
-                        filename: file.name, 
-                        filepath: `uploads/${file.name}`,
-                        filetype: getFileType(file.name),
-                        file: file
+                        fileName: file.name, 
+                        filePath: `uploads/${file.name}`,
+                        fileType: fileType,
+                        uploadTime: uploadTime
                     }
                 ]);
             }).catch(err => {
                 console.error("Error uploading file:", err);
             });
+
+
+            axios.post(logsUrl,logData, {
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            }).then(res => {
+                console.log(res.data);
+                setLogs(prevLogs => [
+                    ...prevLogs,
+                    logData
+                ]);
+            }).catch(err => {
+                console.error("Error uploading file:", err);
+            });
+            
         }
     };
 
-    const getFileType = (filename: string): string => {
-        const extension = filename.split('.').pop()?.toLowerCase();
+    const getFileType = (fileName: string): string => {
+        // if (!fileName) return 'unknown';
+
+        const extension = fileName.split('.').pop()?.toLowerCase();
         if (!extension) return 'unknown';
-        if (['jpg', 'jpeg', 'png', 'gif', 'bmp'].includes(extension)) return 'image';
-        if (['mp3', 'wav', 'aac', 'flac'].includes(extension)) return 'audio';
-        if (['mp4', 'avi', 'mov', 'wmv'].includes(extension)) return 'video';
+        if (['jpg', 'jpeg', 'png', 'gif'].includes(extension)) return 'image';
+        if (['mp3', 'wav', 'flac', 'm4a'].includes(extension)) return 'audio';
+        if (['mp4', 'mov', 'avi'].includes(extension)) return 'video';
         return 'unknown';
     };
 
-    const images = files.filter(file => file.filetype === 'image');
-    const audios = files.filter(file => file.filetype === 'audio');
-    const videos = files.filter(file => file.filetype === 'video');
+    const images = files.filter(file => file.fileType.includes('image'));
+    const audios = files.filter(file => file.fileType.includes('audio'));
+    const videos = files.filter(file => file.fileType.includes('video'));
 
     return (
-        <Grid container sx={{ height: '100vh' }}>
+        <Grid container sx={{ height: '100%' }}>
             <Box sx={{ position: 'absolute', top: '1rem', left: '1rem' }}>
                 <Link to="/">
                     <Button variant="contained">Back</Button>
                 </Link>
             </Box>
-            <Grid item lg={6} sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', paddingTop: 10, paddingLeft: 10, paddingRight: 5, paddingBottom: 5 }}>
+            <Grid item sm={12} md={6} sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', paddingTop: 10, paddingLeft: 10, paddingRight: 5, paddingBottom: 5, height: '50vh' }}>
                 <Upload handleFileUpload={handleFileUpload}/>
             </Grid>
-            <Grid item lg={6} sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', paddingTop: 10, paddingRight: 10, paddingLeft: 5, paddingBottom: 5 }}>
-                <Display baseUrl={baseUrl} images={images} audios={audios} videos={videos}/> 
+            <Grid item sm={12} md={6} sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', paddingTop: 10, paddingRight: 10, paddingLeft: 5, paddingBottom: 5, height: '50vh' }}>
+                <Display baseUrl={baseUrl} images={images} audios={audios} videos={videos} logs={logs}/> 
             </Grid>
-            <Grid item lg={6} sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', paddingBottom: 10, paddingLeft: 10, paddingRight: 5, paddingTop: 5 }}>
-                <Files files={files}/>
+            <Grid item sm={12} md={6} sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', paddingBottom: 10, paddingLeft: 10, paddingRight: 5, paddingTop: 5, height: '50vh' }}>
+                <Files files={files} baseUrl={baseUrl}/>
             </Grid>
-            <Grid item lg={6} sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', paddingBottom: 10, paddingRight: 10, paddingLeft: 5, paddingTop: 5 }}>
-                <Logs files={files}/>
+            <Grid item sm={12} md={6} sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', paddingBottom: 10, paddingRight: 10, paddingLeft: 5, paddingTop: 5, height: '50vh' }}>
+                <Logs logs={logs}/>
             </Grid>
         </Grid>
     );
