@@ -1,26 +1,23 @@
 import React, { useState } from 'react';
 import { Box, Button, Typography, FormControl, InputLabel, MenuItem, Select, SelectChangeEvent } from '@mui/material';
-import axios from 'axios';
-import { FileData, LogData } from '../FileTypes';
+import { FileData } from '../FileTypes';
 
 interface DisplayProps {
-    baseUrl: string;
+    handleDisplay: (selectedImage: FileData | undefined, selectedAudio: FileData | undefined, selectedVideo: FileData | undefined) => void;
     images: FileData[];
     audios: FileData[];
     videos: FileData[];
-    logs: LogData[];
 }
 
-const Display: React.FC<DisplayProps> = ({ baseUrl, images, audios, videos, logs }) => {
-    // console.log('Images:', images);
-    // console.log('Audios:', audios);
-    // console.log('Videos:', videos);
+const Display: React.FC<DisplayProps> = ({ handleDisplay, images, audios, videos }) => {
 
-    const displayUrl = `${baseUrl}/uploads/display`;
+    console.log('Images:', images);
+    console.log('Audios:', audios);
+    console.log('Videos:', videos);
 
-    const [selectedImage, setSelectedImage] = useState<FileData>();
-    const [selectedAudio, setSelectedAudio] = useState<FileData>();
-    const [selectedVideo, setSelectedVideo] = useState<FileData>();
+    const [selectedImage, setSelectedImage] = useState<FileData | undefined>();
+    const [selectedAudio, setSelectedAudio] = useState<FileData | undefined>();
+    const [selectedVideo, setSelectedVideo] = useState<FileData | undefined>();
 
     const handleImageChange = (event: SelectChangeEvent<string>) => {
         const selectedFilePath = event.target.value as string;
@@ -41,46 +38,7 @@ const Display: React.FC<DisplayProps> = ({ baseUrl, images, audios, videos, logs
     };
 
     const handleDisplayClick = () => {
-        const displayTime = new Date().toISOString();
-        const selectedFiles = [];
-
-        if ((selectedVideo && selectedImage) || (selectedVideo && selectedAudio)) {
-            alert('Please select an image and/or audio, or a video');
-            return;
-        }
-
-        if (selectedVideo) {
-            selectedFiles.push({
-                fileName: selectedVideo.fileName,
-                displayTime: displayTime
-            });
-        } else {
-            if (selectedImage) {
-                selectedFiles.push({
-                    fileName: selectedImage.fileName,
-                    displayTime: displayTime
-                });
-            }
-            if (selectedAudio) {
-                selectedFiles.push({
-                    fileName: selectedAudio.fileName,
-                    displayTime: displayTime
-                });
-            }
-        }
-
-        if (selectedFiles.length === 0) {
-            alert('Please select an image and/or audio, or a video');
-            return;
-        }
-
-        axios.post(displayUrl, { files: selectedFiles })
-            .then(response => {
-                console.log(response.data);
-            })
-            .catch(error => {
-                console.error('Error posting files:', error);
-            });
+        handleDisplay(selectedImage, selectedAudio, selectedVideo);
     };
     
 

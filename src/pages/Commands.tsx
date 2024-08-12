@@ -13,6 +13,7 @@ import { FileData, LogData } from './FileTypes';
 export default function Commands() {
     const baseUrl = "http://127.0.0.1:5000"; // localhost
     const uploadsUrl = `${baseUrl}/uploads`;
+    const displayUrl = `${baseUrl}/uploads/display`;
     const logsUrl = `${baseUrl}/logs`;
     
     const [files, setFiles] = useState<FileData[]>([]);
@@ -69,12 +70,6 @@ export default function Commands() {
             formData.append('fileType', fileType);
             formData.append('uploadTime', uploadTime);
 
-            const logData = {        
-                tag: "Upload", 
-                desc: `Uploaded ${file.name}`,
-                time: uploadTime
-            };
-
             axios.post(uploadsUrl, formData, {
                 headers: {
                     'Content-Type': 'multipart/form-data'
@@ -94,7 +89,12 @@ export default function Commands() {
                 console.error("Error uploading file:", err);
             });
 
-
+            const logData = {        
+                tag: "Upload", 
+                desc: `Uploaded ${file.name}`,
+                time: uploadTime
+            };
+            
             axios.post(logsUrl,logData, {
                 headers: {
                     'Content-Type': 'application/json'
@@ -127,6 +127,71 @@ export default function Commands() {
     const audios = files.filter(file => file.fileType.includes('audio'));
     const videos = files.filter(file => file.fileType.includes('video'));
 
+    const handleDisplayClick = (selectedImage: FileData | undefined, selectedAudio: FileData | undefined, selectedVideo: FileData | undefined) => {
+        const displayTime = new Date().toString();
+        const selectedFiles = [];
+
+        if ((selectedVideo && selectedImage) || (selectedVideo && selectedAudio)) {
+            alert('Please select an image and/or audio, or a video');
+            return;
+        }
+
+        if (selectedVideo) {
+            selectedFiles.push({
+                fileName: selectedVideo.fileName,
+                displayTime: displayTime
+            });
+        } else {
+            if (selectedImage) {
+                selectedFiles.push({
+                    fileName: selectedImage.fileName,
+                    displayTime: displayTime
+                });
+            }
+            if (selectedAudio) {
+                selectedFiles.push({
+                    fileName: selectedAudio.fileName,
+                    displayTime: displayTime
+                });
+            }
+        }
+
+        if (selectedFiles.length === 0) {
+            alert('Please select an image and/or audio, or a video');
+            return;
+        }
+
+        axios.post(displayUrl, { files: selectedFiles })
+            .then(response => {
+                console.log(response.data);
+            })
+            .catch(error => {
+                console.error('Error posting files:', error);
+            });
+
+        const fileNames = selectedFiles.map(file => file.fileName).join(', ');
+
+        const logData = {        
+            tag: "Display", 
+            desc: `Displayed ${fileNames}`,
+            time: displayTime
+        };
+
+        axios.post(logsUrl,logData, {
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        }).then(res => {
+            console.log(res.data);
+            setLogs(prevLogs => [
+                ...prevLogs,
+                logData
+            ]);
+        }).catch(err => {
+            console.error("Error uploading file:", err);
+        });
+    };
+
     return (
         <Grid container sx={{ height: '100%' }}>
             <Box sx={{ position: 'absolute', top: '1rem', left: '1rem' }}>
@@ -138,7 +203,7 @@ export default function Commands() {
                 <Upload handleFileUpload={handleFileUpload}/>
             </Grid>
             <Grid item sm={12} md={6} sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', paddingTop: 10, paddingRight: 10, paddingLeft: 5, paddingBottom: 5, height: '50vh' }}>
-                <Display baseUrl={baseUrl} images={images} audios={audios} videos={videos} logs={logs}/> 
+                <Display handleDisplay={handleDisplayClick} images={images} audios={audios} videos={videos} /> 
             </Grid>
             <Grid item sm={12} md={6} sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', paddingBottom: 10, paddingLeft: 10, paddingRight: 5, paddingTop: 5, height: '50vh' }}>
                 <Files files={files} baseUrl={baseUrl}/>
