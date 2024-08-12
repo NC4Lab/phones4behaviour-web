@@ -11,9 +11,9 @@ interface DisplayProps {
 
 const Display: React.FC<DisplayProps> = ({ handleDisplay, images, audios, videos }) => {
 
-    console.log('Images:', images);
-    console.log('Audios:', audios);
-    console.log('Videos:', videos);
+    // console.log('Images:', images);
+    // console.log('Audios:', audios);
+    // console.log('Videos:', videos);
 
     const [selectedImage, setSelectedImage] = useState<FileData | undefined>();
     const [selectedAudio, setSelectedAudio] = useState<FileData | undefined>();

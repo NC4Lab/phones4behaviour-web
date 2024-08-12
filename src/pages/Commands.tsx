@@ -63,7 +63,7 @@ export default function Commands() {
         const file = event.target.files?.[0];
         
         if (file) {
-            const uploadTime = new Date().toString();
+            const uploadTime = formatDate(new Date());
             const fileType = getFileType(file.name);
             const formData = new FormData();
             formData.append('file', file);
@@ -128,7 +128,7 @@ export default function Commands() {
     const videos = files.filter(file => file.fileType.includes('video'));
 
     const handleDisplayClick = (selectedImage: FileData | undefined, selectedAudio: FileData | undefined, selectedVideo: FileData | undefined) => {
-        const displayTime = new Date().toString();
+        const displayTime = formatDate(new Date());
         const selectedFiles = [];
 
         if ((selectedVideo && selectedImage) || (selectedVideo && selectedAudio)) {
@@ -191,6 +191,17 @@ export default function Commands() {
             console.error("Error uploading file:", err);
         });
     };
+
+    function formatDate(date) {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        const hours = String(date.getHours()).padStart(2, '0');
+        const minutes = String(date.getMinutes()).padStart(2, '0');
+        const seconds = String(date.getSeconds()).padStart(2, '0');
+    
+        return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+    }
 
     return (
         <Grid container sx={{ height: '100%' }}>
