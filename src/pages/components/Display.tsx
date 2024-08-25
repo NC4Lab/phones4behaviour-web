@@ -47,7 +47,7 @@ const Display: React.FC<DisplayProps> = ({ handleDisplay, images, audios, videos
             <Typography>Choose files to display (Image and/or Audio, or Video)</Typography>
             <FormControl sx={{ minWidth: 400, marginTop: 2 }} >
                 <InputLabel>Image</InputLabel>
-                <Select label="Image" value={selectedImage ? selectedImage.filePath : ''} onChange={handleImageChange}>
+                <Select label="Image" value={selectedImage ? selectedImage.filePath : ''} onChange={handleImageChange} >
                     {images.map((file, idx) => (
                         <MenuItem key={idx} value={file.filePath}>{file.fileName}</MenuItem>
                     ))}

@@ -1,23 +1,28 @@
 import { Link } from 'react-router-dom';
 import { Button, Grid, Box } from '@mui/material';
 import { useState, useEffect } from 'react';
+import { io } from 'socket.io-client';
 import axios from 'axios';
 
 import Display from './components/Display';
 import Upload from './components/Upload';
 import Files from './components/Files';
 import Logs from './components/Logs';
+import Devices from './components/Devices';
 
-import { FileData, LogData } from './FileTypes';
+import { FileData, LogData, DeviceData } from './FileTypes';
 
 export default function Commands() {
     const baseUrl = "http://127.0.0.1:5000"; // localhost
     const uploadsUrl = `${baseUrl}/uploads`;
     const displayUrl = `${baseUrl}/uploads/display`;
     const logsUrl = `${baseUrl}/logs`;
+
+    const socket = io(`${baseUrl}`);
     
     const [files, setFiles] = useState<FileData[]>([]);
     const [logs, setLogs] = useState<LogData[]>([]);
+    const [devices, setDevices] = useState<DeviceData[]>([{ id: 0, name: 'test device' }]);
 
     useEffect(() => {
         axios.get<FileData[]>(uploadsUrl)
@@ -57,6 +62,14 @@ export default function Commands() {
         }).catch(err => {
             console.error("Error fetching data:", err);
         });
+
+        socket.on('new_log', (data) => {
+            setLogs(prevLogs => [...prevLogs, data.logs]);
+        });
+
+        return () => {
+            socket.off('new_log');
+        };
     }, [logsUrl]);
 
     const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -192,7 +205,7 @@ export default function Commands() {
         });
     };
 
-    function formatDate(date) {
+    function formatDate(date: Date) {
         const year = date.getFullYear();
         const month = String(date.getMonth() + 1).padStart(2, '0');
         const day = String(date.getDate()).padStart(2, '0');
@@ -203,23 +216,27 @@ export default function Commands() {
         return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
     }
 
+
     return (
         <Grid container sx={{ height: '100%' }}>
-            <Box sx={{ position: 'absolute', top: '1rem', left: '1rem' }}>
+            {/* <Box sx={{ position: 'absolute', top: '1rem', left: '1rem' }}>
                 <Link to="/">
                     <Button variant="contained">Back</Button>
                 </Link>
-            </Box>
-            <Grid item sm={12} md={6} sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', paddingTop: 10, paddingLeft: 10, paddingRight: 5, paddingBottom: 5, height: '50vh' }}>
+            </Box> */}
+            <Grid item sm={12} md={2} sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', paddingTop: 4, paddingLeft: 4, paddingRight: 2, paddingBottom: 2, height: '50vh' }}>
                 <Upload handleFileUpload={handleFileUpload}/>
             </Grid>
-            <Grid item sm={12} md={6} sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', paddingTop: 10, paddingRight: 10, paddingLeft: 5, paddingBottom: 5, height: '50vh' }}>
+            <Grid item sm={12} md={4} sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', paddingTop: 4, paddingRight: 2, paddingLeft: 2, paddingBottom: 2, height: '50vh' }}>
                 <Display handleDisplay={handleDisplayClick} images={images} audios={audios} videos={videos} /> 
             </Grid>
-            <Grid item sm={12} md={6} sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', paddingBottom: 10, paddingLeft: 10, paddingRight: 5, paddingTop: 5, height: '50vh' }}>
+            <Grid item sm={12} md={6} sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', paddingBottom: 2, paddingLeft: 2, paddingRight: 4, paddingTop: 4, height: '50vh' }}>
+                <Devices devices={devices}/>
+            </Grid>
+            <Grid item sm={12} md={6} sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', paddingBottom: 4, paddingLeft: 4, paddingRight: 2, paddingTop: 2, height: '50vh' }}>
                 <Files files={files} baseUrl={baseUrl}/>
             </Grid>
-            <Grid item sm={12} md={6} sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', paddingBottom: 10, paddingRight: 10, paddingLeft: 5, paddingTop: 5, height: '50vh' }}>
+            <Grid item sm={12} md={6} sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', paddingBottom: 4, paddingRight: 4, paddingLeft: 2, paddingTop: 2, height: '50vh' }}>
                 <Logs logs={logs}/>
             </Grid>
         </Grid>

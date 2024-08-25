@@ -10,3 +10,8 @@ export interface LogData {
     desc: string;
     time: string;
 }
+
+export interface DeviceData {
+    id: number;
+    name: string;
+}

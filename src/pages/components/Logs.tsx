@@ -3,6 +3,7 @@ import { Box, Table, TableBody, TableContainer, TableHead, TableRow, TableCell }
 import { LogData } from '../FileTypes';
 
 const Logs: React.FC<{ logs: LogData[] }> = ({ logs }) => {
+
     return (
         <Box sx={{width: '100%', height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', border: '5px solid grey' }}>
             <TableContainer>
